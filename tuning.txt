@@ -1,4 +1,4 @@
-RAG Tuning Cheat-Sheet (llamaindex_rag)
+RAG Tuning Cheat-Sheet
 =====================================
 
 This project’s pipeline (high level)
