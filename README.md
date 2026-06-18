@@ -57,7 +57,7 @@ You can interact with the pipeline either through the API server or via the CLI.
 
 Start the API server:
 ```bash
-uvicorn llamaindex_rag.api.main:app --host 0.0.0.0 --port 8000
+uvicorn [folder-name].api.main:app --host 0.0.0.0 --port 8000
 ```
 Interactive API documentation will be available at `http://localhost:8000/docs`.
 
@@ -78,16 +78,16 @@ Run the pipeline entirely from your terminal without starting a server:
 
 ```bash
 # Ingest a file
-python -m llamaindex_rag.cli ingest --file /path/to/doc.pdf --doc-id my-doc
+python -m [folder-name].cli ingest --file /path/to/doc.pdf --doc-id my-doc
 
 # Query the pipeline
-python -m llamaindex_rag.cli query "What are the key features?"
+python -m [folder-name].cli query "What are the key features?"
 
 # Start an interactive Q&A session
-python -m llamaindex_rag.cli interactive
+python -m [folder-name].cli interactive
 
 # View collection diagnostics
-python -m llamaindex_rag.cli health
+python -m [folder-name].cli health
 ```
 
 ### Audio Transcription
@@ -95,7 +95,7 @@ python -m llamaindex_rag.cli health
 Convert meeting recordings or interviews to structured Markdown (which can then be ingested):
 
 ```bash
-python llamaindex_rag/transcription/transcribe.py /path/to/audio.mp3
+python ./transcription/transcribe.py /path/to/audio.mp3
 ```
 
 ## Architecture Layout
