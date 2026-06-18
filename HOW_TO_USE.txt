@@ -1,5 +1,5 @@
 ================================================================================
-        LlamaIndex RAG Pipeline — Complete Usage Guide
+        RAG Pipeline — Complete Usage Guide
 ================================================================================
 
 Table of Contents:
@@ -49,7 +49,7 @@ Table of Contents:
   cd c:\InternShip
 
   # Install all dependencies
-  pip install -r llamaindex_rag/requirements.txt
+  pip install -r ./requirements.txt
 
   This installs:
     - llama-index-core, llama-index-llms-openai, llama-index-vector-stores-chroma
@@ -118,7 +118,7 @@ Table of Contents:
 ─── 4A. METHOD 1: FastAPI Server (uvicorn) ────────────────────────────────────
 
   # From the project root (c:\InternShip)
-  uvicorn llamaindex_rag.api.main:app --host 0.0.0.0 --port 8000
+  uvicorn [folder-name].api.main:app --host 0.0.0.0 --port 8000
 
   Options:
     --reload           Auto-reload on code changes (dev only)
@@ -144,10 +144,10 @@ Table of Contents:
   No server needed! Run everything directly from your terminal.
 
   # Show all available commands
-  python -m llamaindex_rag.cli --help
+  python -m [folder-name].cli --help
 
   # Or equivalently:
-  python -m llamaindex_rag --help
+  python -m [folder-name] --help
 
   Available commands:
   ─────────────────────────────────────────────────────────
@@ -206,21 +206,21 @@ Table of Contents:
   ─────────────────────────────────────────────────────────
   curl -X POST http://localhost:8000/ingest ^
     -H "Content-Type: application/json" ^
-    -d "{\"file_path\": \"C:\\InternShip\\MGFP-Brochure.pdf\", \"doc_id\": \"brochure-001\"}"
+    -d "{\"file_path\": \"[absolute-filepath]", \"doc_id\": \"brochure-001\"}"
   ─────────────────────────────────────────────────────────
 
   curl command (PowerShell):
   ─────────────────────────────────────────────────────────
   curl -X POST http://localhost:8000/ingest `
     -H "Content-Type: application/json" `
-    -d '{"file_path": "C:\\InternShip\\MGFP-Brochure.pdf", "doc_id": "brochure-001"}'
+    -d '{"file_path": "[absolute-filepath]", "doc_id": "brochure-001"}'
   ─────────────────────────────────────────────────────────
 
   curl command (Bash / Git Bash / WSL):
   ─────────────────────────────────────────────────────────
   curl -X POST http://localhost:8000/ingest \
     -H "Content-Type: application/json" \
-    -d '{"file_path": "C:/InternShip/MGFP-Brochure.pdf", "doc_id": "brochure-001"}'
+    -d '{"file_path": "[absolute-filepath]", "doc_id": "brochure-001"}'
   ─────────────────────────────────────────────────────────
 
   Example response:
@@ -389,7 +389,7 @@ Table of Contents:
 7. CONFIGURATION REFERENCE
 ================================================================================
 
-  All settings are defined in:  llamaindex_rag/config.py
+  All settings are defined in:  ./config.py
 
   ┌──────────────────────────┬────────────────────────────────┬──────────┐
   │ Setting                  │ Description                    │ Default  │
@@ -432,7 +432,7 @@ Table of Contents:
 
   ─────────────────────────────────────────────────────────
   import asyncio
-  from llamaindex_rag.pipeline import RAGPipeline
+  from ./pipeline import RAGPipeline
 
   async def main():
       # Initialize the pipeline
@@ -440,7 +440,7 @@ Table of Contents:
 
       # Step 1: Ingest a document
       result = await pipeline.ingest(
-          file_path="C:/InternShip/MGFP-Brochure.pdf",
+          file_path="[absolute-filepath]",
           doc_id="brochure-001"
       )
       print(f"Ingested {result.chunk_count} chunks in {result.ingestion_time_ms}ms")
@@ -485,46 +485,46 @@ Table of Contents:
   Markdown files in the project root, then ingest them like any other .md file.
 
   Default model: gpt-4o-transcribe-diarize (speaker labels + segment timestamps).
-  Override via .env: TRANSCRIPTION_MODEL=gpt-4o-transcribe-diarize
+  Override via .env: TRANSCRIPTION_MODEL=whisper
 
   Prerequisites:
-    • OPENAI_API_KEY in llamaindex_rag/.env (same key as RAG generation)
+    • OPENAI_API_KEY in ./.env (same key as RAG generation)
     • Audio file under 25 MB per file (OpenAI transcription API limit)
     • Supported audio: .mp3, .wav, .m4a, .webm, .mp4, .mpeg, .mpga
 
   Step 1 — Transcribe (from c:\InternShip):
 
   ─────────────────────────────────────────────────────────
-  python llamaindex_rag/transcription/transcribe.py C:\path\to\recording.mp3
+  python ./transcription/transcribe.py [absolute-filepath]
   ─────────────────────────────────────────────────────────
 
   Batch a folder:
 
   ─────────────────────────────────────────────────────────
-  python llamaindex_rag/transcription/transcribe.py C:\path\to\audio_folder\
+  python ./transcription/transcribe.py C:\path\to\audio_folder\
   ─────────────────────────────────────────────────────────
 
   Options:
-    --output-dir PATH   Where to write .md files (default: llamaindex_rag/)
+    --output-dir PATH   Where to write .md files (default: ..)
     --language en       Optional ISO-639-1 language hint
     --model MODEL       Override transcription model (default: gpt-4o-transcribe-diarize)
     --no-structure      Skip LLM sectioning; use pause-based timestamps only
     --force             Overwrite existing .md files
 
-  Output: llamaindex_rag\<audio_stem>.md with semantic headings, speaker
+  Output: .\<audio_stem>.md with semantic headings, speaker
   attribution, timestamps, and metadata (source file, duration, speakers, date).
   chunking_strategy is set to "auto" automatically for the diarize model.
 
   Step 2 — Ingest the Markdown into the RAG pipeline:
 
   ─────────────────────────────────────────────────────────
-  python -m llamaindex_rag.cli ingest --file llamaindex_rag\recording.md --doc-id recording-001
+  python -m ..cli ingest --file [absolute-filepath] --doc-id recording-001
   ─────────────────────────────────────────────────────────
 
   Or via API (use the absolute path to the generated .md file):
 
   ─────────────────────────────────────────────────────────
-  curl -X POST http://localhost:8000/ingest -H "Content-Type: application/json" -d "{\"file_path\": \"C:/InternShip/llamaindex_rag/recording.md\", \"doc_id\": \"recording-001\"}"
+  curl -X POST http://localhost:8000/ingest -H "Content-Type: application/json" -d "{\"file_path\": \"[absolute-filepath]", \"doc_id\": \"recording-001\"}"
   ─────────────────────────────────────────────────────────
 
 
@@ -551,19 +551,15 @@ Table of Contents:
            or use a machine with more memory.
 
   PROBLEM: "ModuleNotFoundError: No module named 'llama_index'"
-  FIX:     Run: pip install -r llamaindex_rag/requirements.txt
+  FIX:     Run: pip install -r ./requirements.txt
 
   PROBLEM: Port 8000 already in use
   FIX:     Either stop the other process or use a different port:
-           uvicorn llamaindex_rag.api.main:app --port 8080
+           uvicorn ..api.main:app --port 8080
 
   PROBLEM: Transcription skipped (file too large)
   FIX:     OpenAI transcription API accepts files up to 25 MB. Split long audio
            externally, then transcribe each part with --force.
-
-  PROBLEM: transcribe.py — ModuleNotFoundError: llamaindex_rag
-  FIX:     Run from c:\InternShip (parent of llamaindex_rag), not inside
-           the package folder: python llamaindex_rag/transcription/transcribe.py ...
 
 
 ================================================================================
@@ -571,13 +567,13 @@ Table of Contents:
 ================================================================================
 
   # 1. Install
-  pip install -r llamaindex_rag/requirements.txt
+  pip install -r ./requirements.txt
 
   # 2. Set your OpenAI key in .env
   echo OPENAI_API_KEY=sk-proj-YOUR_KEY > .env
 
   # 3. Start server
-  uvicorn llamaindex_rag.api.main:app --host 0.0.0.0 --port 8000
+  uvicorn ..api.main:app --host 0.0.0.0 --port 8000
 
   # 4. Health check
   curl http://localhost:8000/health
