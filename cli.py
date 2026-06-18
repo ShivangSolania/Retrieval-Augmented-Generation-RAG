@@ -14,9 +14,9 @@ the FastAPI server.  Supports all core operations:
 
 Usage::
 
-    python -m llamaindex_rag.cli ingest --file report.pdf --doc-id doc-001
-    python -m llamaindex_rag.cli search "What are the key findings?"
-    python -m llamaindex_rag.cli interactive
+    python -m [folder-name].cli ingest --file report.pdf --doc-id doc-001
+    python -m [folder-name].cli search "What are the key findings?"
+    python -m [folder-name].cli interactive
 """
 
 from __future__ import annotations
