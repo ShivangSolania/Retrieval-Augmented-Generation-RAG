@@ -1,0 +1,40 @@
+# ============================================
+# LlamaIndex RAG Pipeline - Dependencies
+# ============================================
+
+# --- Core LlamaIndex (v0.14+) ---
+llama-index-core>=0.14.0
+llama-index-llms-openai>=0.1.0
+llama-index-vector-stores-chroma>=0.5.0
+llama-index-embeddings-huggingface>=0.7.0
+llama-index-retrievers-bm25>=0.7.0
+llama-index-postprocessor-sbert-rerank>=0.5.0
+
+# --- Document Parsing ---
+docling>=2.70.0
+
+# --- Vector Database ---
+chromadb>=0.5.0
+
+# --- Embeddings & Reranking Models ---
+sentence-transformers>=3.0.0
+torch>=2.0.0
+
+# --- BM25 Sparse Retrieval ---
+rank-bm25>=0.2.2
+
+# --- API ---
+fastapi>=0.111.0
+uvicorn>=0.30.0
+python-multipart>=0.0.9
+
+# --- OpenAI (Whisper transcription + LLM structuring) ---
+openai>=1.40.0
+
+# --- Configuration ---
+pydantic>=2.7.0
+pydantic-settings>=2.3.0
+python-dotenv>=1.0.0
+
+# --- Utilities ---
+numpy>=1.24.0

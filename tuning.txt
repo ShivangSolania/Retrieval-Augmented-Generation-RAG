@@ -1,0 +1,158 @@
+RAG Tuning Cheat-Sheet (llamaindex_rag)
+=====================================
+
+This project’s pipeline (high level)
+------------------------------------
+1) Chunking (Hierarchical): parent_chunk_size / chunk_size / overlap
+2) Retrieval: Vector + BM25 fused (RRF) -> optional TOC injection
+3) Rerank (cross-encoder) -> optional parent expansion (AutoMerging)
+4) Generation (LLM)
+
+When tuning, change ONE knob at a time and re-run the same 5–10 queries.
+
+
+Chunking knobs
+--------------
+chunk_size (default 512)
+  Increase when you see:
+    - Answers missing a key sentence that is near the right chunk
+    - Tables split across chunks and lose row/column meaning
+  Decrease when you see:
+    - Too much irrelevant context per chunk
+    - Model gets “distracted” and answers from the wrong part of a big chunk
+  Typical range: 384–768
+
+chunk_overlap (default 64)
+  Increase when you see:
+    - Answer is “on the boundary” between two chunks
+  Decrease when you see:
+    - Many near-duplicate chunks in results / wasted context window
+  Typical range: 32–128
+
+parent_chunk_size (default 1024)
+  Only matters if enable_parent_expansion=true.
+  Increase when you see:
+    - Correct child chunks retrieved but final answer lacks surrounding context
+  Decrease when you see:
+    - Parent expansion pulls in too much irrelevant content (token waste)
+  Typical range: 768–1536
+
+semantic_threshold (default 0.82)
+  Only used if the router chooses semantic splitting (dense prose docs).
+  Increase when you see:
+    - Over-splitting (too many tiny chunks)
+  Decrease when you see:
+    - Under-splitting (very long chunks with mixed topics)
+  Typical range: 0.75–0.90
+
+
+Retrieval knobs (recall vs precision)
+-------------------------------------
+retrieval_top_k (default 50)
+  Increase when you see:
+    - “Answer exists in PDF but never retrieved”
+    - Deep sections missed
+  Decrease when you see:
+    - Slow reranking / cost too high
+    - Reranker gets too much noise
+  Typical range: 30–100
+
+rerank_top_k (default 10)
+  Increase when you see:
+    - Multiple valid supporting chunks needed (multi-part questions)
+    - You want more citations / broader evidence
+  Decrease when you see:
+    - Too much context passed to the LLM, lower precision
+  Typical range: 6–20
+
+vector_weight / bm25_weight (defaults 0.6 / 0.4)
+  Increase vector_weight when you see:
+    - Semantic paraphrases fail (user words don’t match PDF words)
+  Increase bm25_weight when you see:
+    - Exact keyword queries fail (IDs, numbers, policy terms, exact headings)
+  Good starting adjustments:
+    - More semantic: vector 0.7 / bm25 0.3
+    - More lexical:  vector 0.5 / bm25 0.5
+
+rrf_k (default 60)
+  Controls how “top-heavy” reciprocal-rank fusion is.
+  Increase when you see:
+    - Too much dominance by rank-1..rank-3 from one retriever
+  Decrease when you see:
+    - You want top ranks to matter more (more aggressive fusion)
+  Typical range: 20–80
+
+
+TOC tuning (deep recall without swamping)
+----------------------------------------
+enable_toc_index (default true)
+  Turn OFF when you see:
+    - TOC causes irrelevant sections to dominate candidates
+  Keep ON when you see:
+    - Deep sections missed in long documents
+
+toc_top_k (default 5)
+  Increase when you see:
+    - TOC doesn’t “reach” the right deep section
+  Decrease when you see:
+    - Too many TOC sections injected (noise)
+  Typical range: 3–10
+
+toc_child_score_scale (default 0.08)
+  This scales the score assigned to injected TOC child chunks.
+  Decrease when you see:
+    - TOC-injected chunks dominate over obvious vector/BM25 matches
+    - Wrong sections appear in top-10 after rerank
+  Increase when you see:
+    - TOC helps find the right section but those chunks never survive to rerank
+  Typical range: 0.03–0.15
+
+
+Reranking & expansion knobs (precision vs context size)
+-------------------------------------------------------
+enable_reranking (default true)
+  Turn OFF only if:
+    - You cannot afford the latency/cost, or reranker is unstable
+  If ON and you still get wrong sections:
+    - First reduce noise earlier (TOC scale/top_k, retrieval_top_k) before
+      blaming the reranker.
+
+enable_parent_expansion (default true)
+  Turn OFF when you see:
+    - Correct answer chunk retrieved, but parent expansion replaces it with a
+      large parent that dilutes the key table/line.
+  Keep ON when you see:
+    - Answers are “almost right” but missing definition/conditions nearby.
+
+
+Practical “symptom -> action” quick map
+---------------------------------------
+1) "Answer is in a table, but model says not provided"
+   - Increase bm25_weight slightly (tables often have exact strings)
+   - Increase retrieval_top_k (if table chunk isn’t in candidates)
+   - Reduce toc_child_score_scale / toc_top_k (if TOC noise crowds it out)
+   - Consider increasing chunk_overlap if table rows are split
+
+2) "Retrieves right section, but misses one crucial sentence nearby"
+   - Increase chunk_overlap a bit
+   - Increase parent_chunk_size (if parent expansion is enabled)
+
+3) "Wrong section keeps winning"
+   - Decrease toc_child_score_scale and/or toc_top_k
+   - Decrease retrieval_top_k (less noise) or increase reranking strength (keep enable_reranking=true)
+   - Shift weights toward the retriever that better matches your query type
+
+4) "Too slow / too expensive"
+   - Decrease retrieval_top_k first
+   - Decrease rerank_top_k
+   - Reduce toc_top_k
+
+5) "Exact numeric / policy term queries fail"
+   - Increase bm25_weight
+   - Keep chunk_size moderate (too large can bury exact matches)
+
+6) “Exact match must appear in top‑10”, you typically need one of these:
+  - Increase recall: raise retrieval_top_k (e.g. 50 → 80/100) so the matching chunk enters candidates before rerank.
+  - Bias lexical matching: raise bm25_weight (e.g. 0.4 → 0.5/0.6) for exact-word queries.
+  - Return more results: raise rerank_top_k (10 → 15/20) so even if it’s not #1, it still shows up.
+  - If TOC noise ever returns: lower toc_child_score_scale / toc_top_k.

@@ -1,0 +1,181 @@
+LlamaIndex RAG — Module Layout & Functions
+==========================================
+
+Project root: llamaindex_rag/
+------------------------------
+
+Top-level files
+  config.py          Central settings (chunk sizes, retrieval weights, model names,
+                     feature flags). Loaded from .env via Pydantic.
+  pipeline.py        Main orchestrator — wires all components into RAGPipeline
+                     with ingest() and query().
+  cli.py             Command-line interface (ingest, query, search, health,
+                     diagnostics, interactive).
+  __main__.py        Entry point for: python -m llamaindex_rag
+  requirements.txt   Python dependencies.
+  tuning.txt         RAG tuning cheat-sheet (knobs and when to change them).
+  HOW_TO_USE.txt     Full usage guide (install, API, CLI, config).
+  chroma_db/         Persisted ChromaDB vector store (auto-created at runtime).
+
+
+transcription/
+--------------
+  transcribe.py
+    CLI — OpenAI whisper-1
+    → structured Markdown in project root. Model from config.transcription_model.
+
+  formatter.py
+    segments_from_transcription_response() — normalize diarized segments (speaker).
+    format_structured()                      — LLM semantic ## sections + speakers.
+    format_unstructured()                  — pause-grouped speaker sections.
+
+  Run: python llamaindex_rag/transcription/transcribe.py <audio_path>
+  Then: python -m llamaindex_rag.cli ingest --file llamaindex_rag/<stem>.md ...
+
+
+Pipeline flow (high level)
+--------------------------
+
+  INGEST:
+    Document → parser → chunking/router → toc builder → chroma storage
+
+  QUERY:
+    Query → hybrid retriever → reranker → context expander → generator
+
+
+ingestion/
+----------
+  parser.py
+    DoclingParser — parses PDF, DOCX, PPTX, Markdown, TXT via Docling.
+    Extracts structured blocks (headings, paragraphs, tables, lists, code)
+    and builds a table of contents from headings.
+
+    Key models:
+      ContentBlock   — one parsed block with type, text, level, page.
+      TOCEntry       — section title, depth, page, section_path, section_id.
+      ParsedDocument — title, blocks, toc, source_file.
+
+    Key helpers:
+      compute_importance()     — scores block importance for retrieval boost.
+      build_section_path()     — builds "Ch 1 > Sec 2 > Sub 3" paths.
+      nearest_toc_entry()      — links blocks to their TOC section.
+
+    Output: ParsedDocument → to_llama_nodes() → TextNode list with metadata
+    (section_path, section_title, page, importance_score, etc.).
+
+  toc.py
+    TOCIndexBuilder — builds a separate searchable index from TOC entries.
+    One TextNode per section; text = section_path + title + short summary.
+    Metadata stores child_node_ids so retrieval can pull deep content that
+    plain vector search might miss (especially in long documents).
+
+
+chunking/
+---------
+  router.py
+    ChunkingRouter — picks chunking strategy based on file type and content:
+      .md files              → MarkdownNodeParser
+      clear headings (>20%)  → HierarchicalNodeParser (3 levels)
+      dense prose (<5% hdg)  → SemanticSplitterNodeParser
+      default                → HierarchicalNodeParser
+
+    Parent/child hierarchy (1024 / 512 / 256 tokens) supports AutoMerging
+    at query time. Propagates section metadata to every child chunk.
+
+
+embeddings/
+-----------
+  bge.py
+    BGEEmbedding — HuggingFace BGE wrapper (default: BAAI/bge-base-en-v1.5).
+    Automatically adds the BGE query prefix on search queries only.
+
+
+storage/
+--------
+  chroma.py
+    ChromaStore — persistent dual-collection ChromaDB store:
+      "chunks"    — content chunk vectors
+      "toc_index" — TOC entry vectors
+
+    Also maintains SimpleDocumentStore for parent-node lookup during
+    AutoMerging retrieval. Methods: build/load chunk & TOC indices.
+
+
+retrieval/
+----------
+  hybrid.py
+    HybridRetriever — 8-step retrieval pipeline:
+      1. HyDE (optional) for vector search only
+      2. Vector retrieval (top-30)
+      3. BM25 on raw query (top-30)
+      4. RRF fusion (vector + BM25 weights)
+      5. TOC retrieval → inject child chunks from matched sections
+      6. Merge & deduplicate by parent_id
+      7. Score boosting (depth + importance)
+      8. Return top-50 candidates
+
+  reranker.py
+    BGEReranker — cross-encoder rerank (BAAI/bge-reranker-base).
+    Takes top-50 → returns top-10. Always uses the original query (not HyDE).
+
+  expander.py
+    ContextExpander — AutoMergingRetriever parent expansion.
+    When >50% of a parent's children are in reranked results, replaces them
+    with the full parent node for broader LLM context. Runs after reranking.
+
+
+generation/
+-----------
+  generator.py
+    Generator — LLM answer synthesis (OpenAI, default gpt-4o-mini).
+    Uses compact response mode with retrieved chunks as context.
+
+    Shared result models:
+      Citation        — source chunk reference (section, page, score).
+      GenerationResult — answer + citations + retrieval trace.
+      IngestResult    — doc_id, chunk/toc counts, timing.
+      QueryResult     — full query response with answer and metadata.
+
+
+observability/
+--------------
+  logger.py
+    RAGLogger — structured JSON logging for ingestion, retrieval, and
+    generation stages (stdout, machine-parsable).
+
+
+api/
+----
+  main.py
+    FastAPI REST server exposing:
+      POST /ingest              — parse and store a document
+      POST /search              — retrieve + rerank (no LLM)
+      POST /query               — full RAG (retrieve + generate)
+      GET  /health              — collection stats
+      GET  /diagnostics/{doc_id} — per-document chunk breakdown
+
+
+How modules connect (RAGPipeline)
+---------------------------------
+
+  RAGPipeline.__init__ wires:
+    ChromaStore, DoclingParser, TOCIndexBuilder, ChunkingRouter,
+    BGEReranker, Generator, RAGLogger
+
+  ingest():
+    parser.parse → parser.to_llama_nodes → chunker.route
+    → toc_builder.build → store.build_chunk_index + build_toc_index
+
+  query():
+    HybridRetriever.retrieve → BGEReranker.rerank
+    → ContextExpander.expand → Generator.generate
+
+
+Entry points
+------------
+
+  CLI:    python -m llamaindex_rag.cli <command>
+  Module: python -m llamaindex_rag          (same as CLI)
+  API:    uvicorn llamaindex_rag.api.main:app --reload
+  SDK:    from llamaindex_rag.pipeline import RAGPipeline
+  Audio:  python llamaindex_rag/transcription/transcribe.py <audio_path>

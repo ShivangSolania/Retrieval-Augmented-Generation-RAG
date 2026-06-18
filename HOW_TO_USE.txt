@@ -1,0 +1,600 @@
+================================================================================
+        LlamaIndex RAG Pipeline — Complete Usage Guide
+================================================================================
+
+Table of Contents:
+  1. Prerequisites
+  2. Installation
+  3. Environment Setup (.env)
+  4. Two Ways to Run the Pipeline
+     4A. Method 1: FastAPI Server (uvicorn)
+     4B. Method 2: Command-Line Interface (python CLI)
+  5. API Endpoints (with curl examples) — for Method 1
+     5.1  Health Check       — GET  /health
+     5.2  Ingest a Document  — POST /ingest
+     5.3  Search (no answer) — POST /search
+     5.4  Query (full RAG)   — POST /query
+     5.5  Diagnostics        — GET  /diagnostics/{doc_id}
+  6. CLI Commands (with examples) — for Method 2
+     6.1  Ingest a Document
+     6.2  Query (full RAG answer)
+     6.3  Search (chunks only)
+     6.4  Health / Status
+     6.5  Diagnostics
+     6.6  Interactive Mode
+  7. Interactive API Docs (Swagger)
+  8. Configuration Reference
+  9. Python SDK Usage (no server)
+  10. Supported File Types
+  11. Audio to Markdown (Diarized transcription)
+  12. Troubleshooting
+
+
+================================================================================
+1. PREREQUISITES
+================================================================================
+
+  • Python 3.11 or higher
+  • pip (latest)
+  • An OpenAI API key (for GPT generation and audio transcription)
+  • ~2 GB disk space (for BGE embedding + reranker model downloads)
+  • ~4 GB RAM minimum (embedding models are loaded into memory)
+
+
+================================================================================
+2. INSTALLATION
+================================================================================
+
+  # Navigate to the project root
+  cd c:\InternShip
+
+  # Install all dependencies
+  pip install -r llamaindex_rag/requirements.txt
+
+  This installs:
+    - llama-index-core, llama-index-llms-openai, llama-index-vector-stores-chroma
+    - llama-index-embeddings-huggingface, llama-index-retrievers-bm25
+    - llama-index-postprocessor-sbert-rerank
+    - docling (PDF/DOCX/HTML/Markdown parser)
+    - chromadb (vector database)
+    - sentence-transformers + torch (BGE models)
+    - fastapi + uvicorn (API server)
+    - openai (diarized transcription + transcript structuring)
+    - pydantic + pydantic-settings (config)
+
+
+================================================================================
+3. ENVIRONMENT SETUP (.env)
+================================================================================
+
+  Create or edit the file:  c:\InternShip\.env
+
+  Required variables:
+  ─────────────────────────────────────────────────────────
+  OPENAI_API_KEY=sk-proj-YOUR_ACTUAL_KEY_HERE
+  ─────────────────────────────────────────────────────────
+
+  Optional overrides (any config value can be set as an env var):
+  ─────────────────────────────────────────────────────────
+  CHUNK_SIZE=512
+  CHUNK_OVERLAP=64
+  PARENT_CHUNK_SIZE=1024
+  SEMANTIC_THRESHOLD=0.82
+  RETRIEVAL_TOP_K=50
+  RERANK_TOP_K=10
+  BM25_WEIGHT=0.4
+  VECTOR_WEIGHT=0.6
+  RRF_K=60
+  TOC_TOP_K=5
+  EMBEDDING_MODEL=BAAI/bge-base-en-v1.5
+  RERANKER_MODEL=BAAI/bge-reranker-base
+  LLM_MODEL=gpt-4o
+  ENABLE_HYDE=true
+  ENABLE_HYBRID=true
+  ENABLE_RERANKING=true
+  ENABLE_PARENT_EXPANSION=true
+  ENABLE_TOC_INDEX=true
+  ─────────────────────────────────────────────────────────
+
+
+================================================================================
+4. TWO WAYS TO RUN THE PIPELINE
+================================================================================
+
+  You have TWO options for running the RAG pipeline. Choose whichever
+  fits your workflow:
+
+  ┌────────────────────────┬──────────────────────────────────────────────┐
+  │ Method                 │ When to use                                │
+  ├────────────────────────┼──────────────────────────────────────────────┤
+  │ 4A. FastAPI (uvicorn)  │ REST API, web integration, Swagger UI,     │
+  │                        │ multi-client access, production deployment │
+  ├────────────────────────┼──────────────────────────────────────────────┤
+  │ 4B. CLI (python)       │ Quick terminal usage, scripting, no server │
+  │                        │ needed, interactive Q&A sessions           │
+  └────────────────────────┴──────────────────────────────────────────────┘
+
+
+─── 4A. METHOD 1: FastAPI Server (uvicorn) ────────────────────────────────────
+
+  # From the project root (c:\InternShip)
+  uvicorn llamaindex_rag.api.main:app --host 0.0.0.0 --port 8000
+
+  Options:
+    --reload           Auto-reload on code changes (dev only)
+    --workers 4        Run 4 worker processes (production)
+    --host 127.0.0.1   Bind to localhost only
+    --port 8080        Use a different port
+
+  NOTE: First startup will be slow (~1-3 minutes) because it downloads:
+    • BAAI/bge-base-en-v1.5      (~440 MB) — embedding model
+    • BAAI/bge-reranker-base     (~1.1 GB) — reranker model
+  These are cached after the first download in your HuggingFace cache.
+
+  Once you see this line, the server is ready:
+    INFO:     Uvicorn running on http://0.0.0.0:8000
+
+  To stop the server: Press Ctrl+C
+
+  Then use curl or Swagger UI to interact (see Section 5).
+
+
+─── 4B. METHOD 2: Command-Line Interface (python CLI) ────────────────────────
+
+  No server needed! Run everything directly from your terminal.
+
+  # Show all available commands
+  python -m llamaindex_rag.cli --help
+
+  # Or equivalently:
+  python -m llamaindex_rag --help
+
+  Available commands:
+  ─────────────────────────────────────────────────────────
+  ingest        Ingest a document into ChromaDB
+  query         Full RAG query (retrieve + generate answer)
+  search        Search chunks (no LLM answer)
+  health        Show collection stats
+  diagnostics   Document chunk diagnostics
+  interactive   Start an interactive Q&A session
+  ─────────────────────────────────────────────────────────
+
+  NOTE: Same first-run model download applies (~1-3 min on first use).
+
+  See Section 6 for full CLI command examples.
+
+
+================================================================================
+5. API ENDPOINTS — for Method 1 (FastAPI Server)
+================================================================================
+
+
+─── 5.1  HEALTH CHECK ─────────────────────────────────────────────────────────
+
+  Endpoint:  GET /health
+  Purpose:   Check if the server is running and see collection stats.
+
+  curl command:
+  ─────────────────────────────────────────────────────────
+  curl http://localhost:8000/health
+  ─────────────────────────────────────────────────────────
+
+  Example response:
+  {
+    "status": "ok",
+    "chunks_count": 0,
+    "toc_count": 0,
+    "bm25_index_size": 0
+  }
+
+  • chunks_count:    Number of chunks stored in ChromaDB
+  • toc_count:       Number of table-of-contents entries indexed
+  • bm25_index_size: Number of nodes in the in-memory BM25 index
+
+
+─── 5.2  INGEST A DOCUMENT ────────────────────────────────────────────────────
+
+  Endpoint:  POST /ingest
+  Purpose:   Parse a document, chunk it, embed it, and store in ChromaDB.
+             You MUST ingest at least one document before searching/querying.
+
+  Request body fields:
+    • file_path  (string, required) — Absolute path to the document on disk
+    • doc_id     (string, required) — A unique ID you assign to this document
+
+  curl command (Windows CMD):
+  ─────────────────────────────────────────────────────────
+  curl -X POST http://localhost:8000/ingest ^
+    -H "Content-Type: application/json" ^
+    -d "{\"file_path\": \"C:\\InternShip\\MGFP-Brochure.pdf\", \"doc_id\": \"brochure-001\"}"
+  ─────────────────────────────────────────────────────────
+
+  curl command (PowerShell):
+  ─────────────────────────────────────────────────────────
+  curl -X POST http://localhost:8000/ingest `
+    -H "Content-Type: application/json" `
+    -d '{"file_path": "C:\\InternShip\\MGFP-Brochure.pdf", "doc_id": "brochure-001"}'
+  ─────────────────────────────────────────────────────────
+
+  curl command (Bash / Git Bash / WSL):
+  ─────────────────────────────────────────────────────────
+  curl -X POST http://localhost:8000/ingest \
+    -H "Content-Type: application/json" \
+    -d '{"file_path": "C:/InternShip/MGFP-Brochure.pdf", "doc_id": "brochure-001"}'
+  ─────────────────────────────────────────────────────────
+
+  Example response:
+  {
+    "doc_id": "brochure-001",
+    "chunk_count": 42,
+    "toc_entries": 8,
+    "ingestion_time_ms": 12340
+  }
+
+  Notes:
+    • Ingestion can take 10-60 seconds depending on document size.
+    • The file_path must be accessible from the machine running the server.
+    • Supported formats: PDF, DOCX, HTML, Markdown (.md), plain text (.txt)
+    • Each doc_id should be unique. Re-ingesting the same doc_id will
+      add duplicate chunks.
+
+
+─── 5.3  SEARCH (Retrieve chunks, no LLM answer) ─────────────────────────────
+
+  Endpoint:  POST /search
+  Purpose:   Find relevant chunks using hybrid retrieval + reranking,
+             WITHOUT generating an LLM answer. Useful for debugging
+             retrieval quality or building custom UIs.
+
+  Request body fields:
+    • query  (string, required) — Natural-language search query
+    • top_k  (int, optional)    — Number of results to return (default: 10)
+
+  curl command:
+  ─────────────────────────────────────────────────────────
+  curl -X POST http://localhost:8000/search ^
+    -H "Content-Type: application/json" ^
+    -d "{\"query\": \"What are the main features?\", \"top_k\": 5}"
+  ─────────────────────────────────────────────────────────
+
+  Example response:
+  {
+    "chunks": [
+      {
+        "text": "The product features include ...",
+        "score": 0.8921,
+        "metadata": {
+          "doc_id": "brochure-001",
+          "section_path": "Features > Overview",
+          "page": 3,
+          "chunk_type": "paragraph",
+          "depth": 2,
+          "importance_score": 0.75
+        },
+        "node_id": "abc123"
+      },
+      ...
+    ],
+    "trace": [
+      {
+        "rank": 1,
+        "node_id": "abc123",
+        "score": 0.8921,
+        "section_path": "Features > Overview",
+        "depth": 2,
+        "page": 3,
+        "chunk_type": "paragraph"
+      },
+      ...
+    ]
+  }
+
+  Notes:
+    • You must call /ingest first, otherwise you get a 400 error.
+    • The "trace" field shows the retrieval pipeline's ranking decisions.
+
+
+─── 5.4  QUERY (Full RAG: retrieve + generate answer) ─────────────────────────
+
+  Endpoint:  POST /query
+  Purpose:   Full RAG pipeline — retrieves context, reranks, expands
+             parent chunks, and generates an answer using GPT-4o.
+
+  Request body fields:
+    • query  (string, required) — Natural-language question
+
+  curl command:
+  ─────────────────────────────────────────────────────────
+  curl -X POST http://localhost:8000/query ^
+    -H "Content-Type: application/json" ^
+    -d "{\"query\": \"What are the key benefits of this product?\"}"
+  ─────────────────────────────────────────────────────────
+
+  Example response:
+  {
+    "answer": "Based on the document, the key benefits include ...",
+    "citations": [
+      {
+        "index": 1,
+        "section_path": "Benefits > Overview",
+        "page": 5,
+        "chunk_type": "paragraph",
+        "score": 0.9123
+      },
+      {
+        "index": 2,
+        "section_path": "Features > Details",
+        "page": 7,
+        "chunk_type": "table",
+        "score": 0.8456
+      }
+    ],
+    "trace": [ ... ],
+    "latency_ms": 3420
+  }
+
+  Notes:
+    • Requires a valid OPENAI_API_KEY in your .env file.
+    • Requires at least one document to be ingested first.
+    • latency_ms is the total end-to-end time (retrieve + rerank + generate).
+    • citations show exactly which chunks the answer was derived from.
+
+
+─── 5.5  DIAGNOSTICS ──────────────────────────────────────────────────────────
+
+  Endpoint:  GET /diagnostics/{doc_id}
+  Purpose:   Inspect chunk statistics for a specific ingested document.
+
+  curl command:
+  ─────────────────────────────────────────────────────────
+  curl http://localhost:8000/diagnostics/brochure-001
+  ─────────────────────────────────────────────────────────
+
+  Example response:
+  {
+    "chunk_count": 42,
+    "depth_distribution": {
+      "0": 5,
+      "1": 12,
+      "2": 20,
+      "3": 5
+    },
+    "avg_importance": 0.6823
+  }
+
+  • chunk_count:        Total chunks for this document
+  • depth_distribution: How many chunks at each heading depth level
+  • avg_importance:     Average importance score across all chunks
+
+  Notes:
+    • Returns 404 if the doc_id is not found.
+
+
+================================================================================
+6. INTERACTIVE API DOCS (Swagger UI)
+================================================================================
+
+  Once the server is running, open your browser and visit:
+
+    http://localhost:8000/docs        ← Swagger UI (interactive)
+    http://localhost:8000/redoc       ← ReDoc (read-only, prettier)
+
+  Swagger UI lets you:
+    • See all endpoints with their request/response schemas
+    • Try out any endpoint directly from your browser
+    • View example payloads and response models
+
+
+================================================================================
+7. CONFIGURATION REFERENCE
+================================================================================
+
+  All settings are defined in:  llamaindex_rag/config.py
+
+  ┌──────────────────────────┬────────────────────────────────┬──────────┐
+  │ Setting                  │ Description                    │ Default  │
+  ├──────────────────────────┼────────────────────────────────┼──────────┤
+  │ CHUNK_SIZE               │ Token count per child chunk    │ 512      │
+  │ CHUNK_OVERLAP            │ Overlap between chunks         │ 64       │
+  │ PARENT_CHUNK_SIZE        │ Parent chunk size (AutoMerge)  │ 1024     │
+  │ SEMANTIC_THRESHOLD       │ Cosine similarity breakpoint   │ 0.82     │
+  │ RETRIEVAL_TOP_K          │ Candidates before reranking    │ 50       │
+  │ RERANK_TOP_K             │ Results after reranking        │ 10       │
+  │ BM25_WEIGHT              │ BM25 weight in RRF fusion      │ 0.4      │
+  │ VECTOR_WEIGHT            │ Vector weight in RRF fusion    │ 0.6      │
+  │ RRF_K                    │ Reciprocal Rank Fusion constant│ 60       │
+  │ TOC_TOP_K                │ TOC entries per query          │ 5        │
+  │ EMBEDDING_MODEL          │ Dense embedding model          │ BAAI/    │
+  │                          │                                │ bge-base │
+  │                          │                                │ -en-v1.5 │
+  │ RERANKER_MODEL           │ Cross-encoder reranker model   │ BAAI/    │
+  │                          │                                │ bge-     │
+  │                          │                                │ reranker │
+  │                          │                                │ -base    │
+  │ LLM_MODEL                │ OpenAI model for generation    │ gpt-4o   │
+  │ ENABLE_HYDE              │ Use HyDE for vector search     │ true     │
+  │ ENABLE_HYBRID            │ Use vector + BM25 fusion       │ true     │
+  │ ENABLE_RERANKING         │ Apply cross-encoder reranking  │ true     │
+  │ ENABLE_PARENT_EXPANSION  │ Use AutoMergingRetriever       │ true     │
+  │ ENABLE_TOC_INDEX         │ Use separate TOC index         │ true     │
+  └──────────────────────────┴────────────────────────────────┴──────────┘
+
+  Override any setting via environment variable or .env file:
+    SET CHUNK_SIZE=256
+    SET ENABLE_HYDE=false
+
+
+================================================================================
+8. PYTHON SDK USAGE (Without the API Server)
+================================================================================
+
+  You can also use the pipeline directly in Python without the FastAPI server:
+
+  ─────────────────────────────────────────────────────────
+  import asyncio
+  from llamaindex_rag.pipeline import RAGPipeline
+
+  async def main():
+      # Initialize the pipeline
+      pipeline = RAGPipeline()
+
+      # Step 1: Ingest a document
+      result = await pipeline.ingest(
+          file_path="C:/InternShip/MGFP-Brochure.pdf",
+          doc_id="brochure-001"
+      )
+      print(f"Ingested {result.chunk_count} chunks in {result.ingestion_time_ms}ms")
+
+      # Step 2: Query the pipeline
+      answer = await pipeline.query("What are the key features?")
+      print(f"Answer: {answer.answer}")
+      print(f"Citations: {len(answer.citations)}")
+      print(f"Latency: {answer.latency_ms}ms")
+
+  asyncio.run(main())
+  ─────────────────────────────────────────────────────────
+
+  Run it:
+    python my_script.py
+
+
+================================================================================
+9. SUPPORTED FILE TYPES
+================================================================================
+
+  The Docling parser supports the following document formats:
+
+  ┌────────────┬────────────────────────────────────────────────────────┐
+  │ Extension  │ Description                                          │
+  ├────────────┼────────────────────────────────────────────────────────┤
+  │ .pdf       │ PDF documents (text + tables + images via OCR)        │
+  │ .docx      │ Microsoft Word documents                             │
+  │ .html      │ HTML web pages                                       │
+  │ .md        │ Markdown files                                       │
+  │ .txt       │ Plain text files                                     │
+  │ .pptx      │ PowerPoint presentations                             │
+  │ .xlsx      │ Excel spreadsheets                                   │
+  └────────────┴────────────────────────────────────────────────────────┘
+
+
+================================================================================
+11. AUDIO TO MARKDOWN (DIARIZED TRANSCRIPTION)
+================================================================================
+
+  Convert meeting recordings, interviews, or other audio into structured
+  Markdown files in the project root, then ingest them like any other .md file.
+
+  Default model: gpt-4o-transcribe-diarize (speaker labels + segment timestamps).
+  Override via .env: TRANSCRIPTION_MODEL=gpt-4o-transcribe-diarize
+
+  Prerequisites:
+    • OPENAI_API_KEY in llamaindex_rag/.env (same key as RAG generation)
+    • Audio file under 25 MB per file (OpenAI transcription API limit)
+    • Supported audio: .mp3, .wav, .m4a, .webm, .mp4, .mpeg, .mpga
+
+  Step 1 — Transcribe (from c:\InternShip):
+
+  ─────────────────────────────────────────────────────────
+  python llamaindex_rag/transcription/transcribe.py C:\path\to\recording.mp3
+  ─────────────────────────────────────────────────────────
+
+  Batch a folder:
+
+  ─────────────────────────────────────────────────────────
+  python llamaindex_rag/transcription/transcribe.py C:\path\to\audio_folder\
+  ─────────────────────────────────────────────────────────
+
+  Options:
+    --output-dir PATH   Where to write .md files (default: llamaindex_rag/)
+    --language en       Optional ISO-639-1 language hint
+    --model MODEL       Override transcription model (default: gpt-4o-transcribe-diarize)
+    --no-structure      Skip LLM sectioning; use pause-based timestamps only
+    --force             Overwrite existing .md files
+
+  Output: llamaindex_rag\<audio_stem>.md with semantic headings, speaker
+  attribution, timestamps, and metadata (source file, duration, speakers, date).
+  chunking_strategy is set to "auto" automatically for the diarize model.
+
+  Step 2 — Ingest the Markdown into the RAG pipeline:
+
+  ─────────────────────────────────────────────────────────
+  python -m llamaindex_rag.cli ingest --file llamaindex_rag\recording.md --doc-id recording-001
+  ─────────────────────────────────────────────────────────
+
+  Or via API (use the absolute path to the generated .md file):
+
+  ─────────────────────────────────────────────────────────
+  curl -X POST http://localhost:8000/ingest -H "Content-Type: application/json" -d "{\"file_path\": \"C:/InternShip/llamaindex_rag/recording.md\", \"doc_id\": \"recording-001\"}"
+  ─────────────────────────────────────────────────────────
+
+
+================================================================================
+12. TROUBLESHOOTING
+================================================================================
+
+  PROBLEM: Server fails with "Extra inputs are not permitted"
+  FIX:     Your .env file has variables not defined in RAGConfig.
+           This is fixed — config.py now uses extra = "ignore".
+
+  PROBLEM: Server takes a long time to start
+  REASON:  First run downloads ~1.5 GB of model weights. Subsequent
+           starts are faster (~10-20 seconds).
+
+  PROBLEM: "No documents ingested. Call /ingest first."
+  FIX:     You must POST to /ingest before using /search or /query.
+
+  PROBLEM: OpenAI API errors during /query
+  FIX:     Check that OPENAI_API_KEY in .env is valid and has credits.
+
+  PROBLEM: Out of memory errors
+  FIX:     The BGE models need ~2-4 GB RAM. Close other applications
+           or use a machine with more memory.
+
+  PROBLEM: "ModuleNotFoundError: No module named 'llama_index'"
+  FIX:     Run: pip install -r llamaindex_rag/requirements.txt
+
+  PROBLEM: Port 8000 already in use
+  FIX:     Either stop the other process or use a different port:
+           uvicorn llamaindex_rag.api.main:app --port 8080
+
+  PROBLEM: Transcription skipped (file too large)
+  FIX:     OpenAI transcription API accepts files up to 25 MB. Split long audio
+           externally, then transcribe each part with --force.
+
+  PROBLEM: transcribe.py — ModuleNotFoundError: llamaindex_rag
+  FIX:     Run from c:\InternShip (parent of llamaindex_rag), not inside
+           the package folder: python llamaindex_rag/transcription/transcribe.py ...
+
+
+================================================================================
+  QUICK START CHEAT SHEET
+================================================================================
+
+  # 1. Install
+  pip install -r llamaindex_rag/requirements.txt
+
+  # 2. Set your OpenAI key in .env
+  echo OPENAI_API_KEY=sk-proj-YOUR_KEY > .env
+
+  # 3. Start server
+  uvicorn llamaindex_rag.api.main:app --host 0.0.0.0 --port 8000
+
+  # 4. Health check
+  curl http://localhost:8000/health
+
+  # 5. Ingest a document
+  curl -X POST http://localhost:8000/ingest -H "Content-Type: application/json" -d "{\"file_path\": \"C:/path/to/doc.pdf\", \"doc_id\": \"my-doc\"}"
+
+  # 6. Search (chunks only)
+  curl -X POST http://localhost:8000/search -H "Content-Type: application/json" -d "{\"query\": \"your question here\", \"top_k\": 5}"
+
+  # 7. Query (full RAG answer)
+  curl -X POST http://localhost:8000/query -H "Content-Type: application/json" -d "{\"query\": \"your question here\"}"
+
+  # 8. Diagnostics
+  curl http://localhost:8000/diagnostics/my-doc
+
+  # 9. Swagger UI
+  Open http://localhost:8000/docs in your browser
+
+================================================================================
