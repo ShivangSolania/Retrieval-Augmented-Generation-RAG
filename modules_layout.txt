@@ -1,7 +1,7 @@
-LlamaIndex RAG — Module Layout & Functions
+RAG — Module Layout & Functions
 ==========================================
 
-Project root: llamaindex_rag/
+Project root: [folder-name]/
 ------------------------------
 
 Top-level files
@@ -174,8 +174,8 @@ How modules connect (RAGPipeline)
 Entry points
 ------------
 
-  CLI:    python -m llamaindex_rag.cli <command>
-  Module: python -m llamaindex_rag          (same as CLI)
-  API:    uvicorn llamaindex_rag.api.main:app --reload
-  SDK:    from llamaindex_rag.pipeline import RAGPipeline
-  Audio:  python llamaindex_rag/transcription/transcribe.py <audio_path>
+  CLI:    python -m [folder-name].cli <command>
+  Module: python -m [folder-name]         (same as CLI)
+  API:    uvicorn [folder-name].api.main:app --reload
+  SDK:    from [folder-name].pipeline import RAGPipeline
+  Audio:  python ./transcription/transcribe.py <audio_path>
