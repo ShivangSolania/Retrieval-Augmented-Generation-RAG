@@ -1,0 +1,201 @@
+{
+  "metadata": {
+    "description": "Golden query set for RAG retrieval quality evaluation",
+    "version": "1.0",
+    "created": "2026-07-23",
+    "num_queries": 15
+  },
+  "queries": [
+    {
+      "id": "q_001",
+      "query": "What are the main features of this RAG system?",
+      "expected_sections": [
+        "Advanced Document Parsing",
+        "Audio Transcription",
+        "Smart Chunking",
+        "Hybrid Retrieval",
+        "Cross-Encoder Reranking",
+        "Context Expansion",
+        "Dual Interface"
+      ],
+      "difficulty": "easy",
+      "type": "feature_overview"
+    },
+    {
+      "id": "q_002",
+      "query": "How does hybrid retrieval combine vector and BM25 search?",
+      "expected_sections": [
+        "Reciprocal Rank Fusion",
+        "vector_weight",
+        "bm25_weight",
+        "RRF fusion"
+      ],
+      "difficulty": "medium",
+      "type": "technical"
+    },
+    {
+      "id": "q_003",
+      "query": "What embedding model is used by default?",
+      "expected_sections": [
+        "BAAI/bge-base-en-v1.5",
+        "embedding_model",
+        "BGEEmbedding"
+      ],
+      "difficulty": "easy",
+      "type": "config"
+    },
+    {
+      "id": "q_004",
+      "query": "Explain the 8-step retrieval pipeline",
+      "expected_sections": [
+        "HyDE",
+        "Vector retrieval",
+        "BM25 retrieval",
+        "RRF fusion",
+        "TOC retrieval",
+        "Merge & deduplicate",
+        "Score boosting",
+        "Top-50 selection"
+      ],
+      "difficulty": "hard",
+      "type": "technical"
+    },
+    {
+      "id": "q_005",
+      "query": "How to ingest a document via the API?",
+      "expected_sections": [
+        "POST /ingest",
+        "file_path",
+        "doc_id",
+        "chunk_count"
+      ],
+      "difficulty": "easy",
+      "type": "usage"
+    },
+    {
+      "id": "q_006",
+      "query": "What chunking strategies are available?",
+      "expected_sections": [
+        "MarkdownNodeParser",
+        "HierarchicalNodeParser",
+        "SemanticSplitterNodeParser",
+        "ChunkingRouter"
+      ],
+      "difficulty": "medium",
+      "type": "technical"
+    },
+    {
+      "id": "q_007",
+      "query": "What is the default chunk size and overlap?",
+      "expected_sections": [
+        "chunk_size: 512",
+        "chunk_overlap: 64",
+        "CHUNK_SIZE",
+        "CHUNK_OVERLAP"
+      ],
+      "difficulty": "easy",
+      "type": "config"
+    },
+    {
+      "id": "q_008",
+      "query": "How does cross-encoder reranking improve results?",
+      "expected_sections": [
+        "BAAI/bge-reranker-base",
+        "BGEReranker",
+        "top_n",
+        "rerank_top_k"
+      ],
+      "difficulty": "medium",
+      "type": "technical"
+    },
+    {
+      "id": "q_009",
+      "query": "What file formats are supported for document ingestion?",
+      "expected_sections": [
+        "PDF",
+        "DOCX",
+        "HTML",
+        "Markdown",
+        "text",
+        "PPTX",
+        "XLSX",
+        "Docling"
+      ],
+      "difficulty": "easy",
+      "type": "usage"
+    },
+    {
+      "id": "q_010",
+      "query": "How does AutoMergingRetriever expand context?",
+      "expected_sections": [
+        "ContextExpander",
+        "parent expansion",
+        "enable_parent_expansion",
+        "broader context"
+      ],
+      "difficulty": "medium",
+      "type": "technical"
+    },
+    {
+      "id": "q_011",
+      "query": "What is the TOC index and how does it work?",
+      "expected_sections": [
+        "TOC index",
+        "TOCIndexBuilder",
+        "table of contents",
+        "deep content",
+        "child_node_ids"
+      ],
+      "difficulty": "hard",
+      "type": "technical"
+    },
+    {
+      "id": "q_012",
+      "query": "How to tune retrieval for better precision?",
+      "expected_sections": [
+        "retrieval_top_k",
+        "rerank_top_k",
+        "toc_top_k",
+        "tuning"
+      ],
+      "difficulty": "hard",
+      "type": "tuning"
+    },
+    {
+      "id": "q_013",
+      "query": "What is HyDE and how is it used?",
+      "expected_sections": [
+        "HyDE",
+        "hypothetical document",
+        "vector search",
+        "enable_hyde"
+      ],
+      "difficulty": "medium",
+      "type": "technical"
+    },
+    {
+      "id": "q_014",
+      "query": "How to start the FastAPI server and access Swagger UI?",
+      "expected_sections": [
+        "uvicorn",
+        "localhost:8000",
+        "/docs",
+        "FastAPI"
+      ],
+      "difficulty": "easy",
+      "type": "usage"
+    },
+    {
+      "id": "q_015",
+      "query": "What is the deduplication logic in hybrid retrieval?",
+      "expected_sections": [
+        "parent_id",
+        "deduplicate",
+        "_deduplicate",
+        "sibling chunks"
+      ],
+      "difficulty": "hard",
+      "type": "technical"
+    }
+  ]
+}
