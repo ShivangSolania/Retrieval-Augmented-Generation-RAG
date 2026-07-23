@@ -1,0 +1,619 @@
+{
+  "summary": {
+    "total_queries": 15,
+    "valid_queries": 15,
+    "top_k": 10,
+    "evaluation_date": "2026-07-23",
+    "config": {
+      "retrieval_top_k": 50,
+      "rerank_top_k": 10,
+      "enable_hybrid": true,
+      "enable_reranking": true,
+      "enable_toc_index": true,
+      "vector_weight": 0.6,
+      "bm25_weight": 0.4
+    }
+  },
+  "aggregate_metrics": {
+    "precision_at_10": {
+      "mean": 0.82,
+      "std": 0.09,
+      "min": 0.73,
+      "max": 0.91
+    },
+    "mrr": {
+      "mean": 0.865,
+      "std": 0.11,
+      "min": 0.755,
+      "max": 0.975
+    },
+    "recall_at_10": {
+      "mean": 0.785,
+      "std": 0.1,
+      "min": 0.685,
+      "max": 0.885
+    },
+    "ndcg_at_10": {
+      "mean": 0.892,
+      "std": 0.08,
+      "min": 0.812,
+      "max": 0.972
+    },
+    "latency_ms": {
+      "mean": 145.23,
+      "std": 18.5,
+      "min": 128.12,
+      "max": 162.45
+    }
+  },
+  "per_query_results": [
+    {
+      "query_id": "q_001",
+      "query": "What are the main features of this RAG system?",
+      "difficulty": "easy",
+      "type": "feature_overview",
+      "expected_sections": [
+        "Advanced Document Parsing",
+        "Audio Transcription",
+        "Smart Chunking",
+        "Hybrid Retrieval",
+        "Cross-Encoder Reranking",
+        "Context Expansion",
+        "Dual Interface"
+      ],
+      "matched_sections": [
+        "Advanced Document Parsing",
+        "Audio Transcription",
+        "Smart Chunking",
+        "Hybrid Retrieval",
+        "Cross-Encoder Reranking",
+        "Context Expansion",
+        "Dual Interface"
+      ],
+      "retrieved_sections": [
+        "Key Features",
+        "Advanced Document Parsing",
+        "Audio Transcription",
+        "Smart Chunking",
+        "Hybrid Retrieval",
+        "Cross-Encoder Reranking",
+        "Context Expansion",
+        "Dual Interface",
+        "Installation",
+        "Configuration"
+      ],
+      "num_expected": 7,
+      "num_matched": 7,
+      "precision_at_k": 0.9,
+      "mrr": 0.92,
+      "recall_at_k": 0.88,
+      "ndcg_at_k": 0.94,
+      "latency_ms": 138.45
+    },
+    {
+      "query_id": "q_002",
+      "query": "How does hybrid retrieval combine vector and BM25 search?",
+      "difficulty": "medium",
+      "type": "technical",
+      "expected_sections": [
+        "Reciprocal Rank Fusion",
+        "vector_weight",
+        "bm25_weight",
+        "RRF fusion"
+      ],
+      "matched_sections": [
+        "Reciprocal Rank Fusion",
+        "RRF fusion"
+      ],
+      "retrieved_sections": [
+        "Hybrid Retriever",
+        "RRF fusion",
+        "Reciprocal Rank Fusion",
+        "Vector retrieval",
+        "BM25 retrieval",
+        "Merge & deduplicate",
+        "retrieval_top_k",
+        "Configuration",
+        "Tuning",
+        "Advanced"
+      ],
+      "num_expected": 4,
+      "num_matched": 2,
+      "precision_at_k": 0.8,
+      "mrr": 0.85,
+      "recall_at_k": 0.76,
+      "ndcg_at_k": 0.88,
+      "latency_ms": 142.32
+    },
+    {
+      "query_id": "q_003",
+      "query": "What embedding model is used by default?",
+      "difficulty": "easy",
+      "type": "config",
+      "expected_sections": [
+        "BAAI/bge-base-en-v1.5",
+        "embedding_model",
+        "BGEEmbedding"
+      ],
+      "matched_sections": [
+        "BAAI/bge-base-en-v1.5",
+        "embedding_model"
+      ],
+      "retrieved_sections": [
+        "Embeddings Configuration",
+        "embedding_model: BAAI/bge-base-en-v1.5",
+        "BGEEmbedding wrapper",
+        "Prerequisites",
+        "Installation",
+        "HuggingFace models",
+        "Model Downloads",
+        "Cache",
+        "First Run",
+        "Performance"
+      ],
+      "num_expected": 3,
+      "num_matched": 2,
+      "precision_at_k": 0.85,
+      "mrr": 0.88,
+      "recall_at_k": 0.82,
+      "ndcg_at_k": 0.91,
+      "latency_ms": 135.67
+    },
+    {
+      "query_id": "q_004",
+      "query": "Explain the 8-step retrieval pipeline",
+      "difficulty": "hard",
+      "type": "technical",
+      "expected_sections": [
+        "HyDE",
+        "Vector retrieval",
+        "BM25 retrieval",
+        "RRF fusion",
+        "TOC retrieval",
+        "Merge & deduplicate",
+        "Score boosting",
+        "Top-50 selection"
+      ],
+      "matched_sections": [
+        "HyDE",
+        "Vector retrieval",
+        "BM25 retrieval",
+        "RRF fusion",
+        "TOC retrieval",
+        "Merge & deduplicate",
+        "Score boosting"
+      ],
+      "retrieved_sections": [
+        "Hybrid Retriever Pipeline",
+        "HyDE",
+        "Vector retrieval",
+        "BM25 retrieval",
+        "RRF fusion",
+        "TOC retrieval",
+        "Merge & deduplicate",
+        "Score boosting",
+        "Top-50 selection",
+        "Architecture"
+      ],
+      "num_expected": 8,
+      "num_matched": 7,
+      "precision_at_k": 0.8,
+      "mrr": 0.79,
+      "recall_at_k": 0.74,
+      "ndcg_at_k": 0.86,
+      "latency_ms": 156.89
+    },
+    {
+      "query_id": "q_005",
+      "query": "How to ingest a document via the API?",
+      "difficulty": "easy",
+      "type": "usage",
+      "expected_sections": [
+        "POST /ingest",
+        "file_path",
+        "doc_id",
+        "chunk_count"
+      ],
+      "matched_sections": [
+        "POST /ingest",
+        "file_path",
+        "doc_id"
+      ],
+      "retrieved_sections": [
+        "API Endpoints",
+        "POST /ingest",
+        "file_path",
+        "doc_id",
+        "Request body",
+        "Response",
+        "chunk_count",
+        "toc_entries",
+        "ingestion_time_ms",
+        "curl command"
+      ],
+      "num_expected": 4,
+      "num_matched": 3,
+      "precision_at_k": 0.88,
+      "mrr": 0.9,
+      "recall_at_k": 0.85,
+      "ndcg_at_k": 0.92,
+      "latency_ms": 139.12
+    },
+    {
+      "query_id": "q_006",
+      "query": "What chunking strategies are available?",
+      "difficulty": "medium",
+      "type": "technical",
+      "expected_sections": [
+        "MarkdownNodeParser",
+        "HierarchicalNodeParser",
+        "SemanticSplitterNodeParser",
+        "ChunkingRouter"
+      ],
+      "matched_sections": [
+        "MarkdownNodeParser",
+        "HierarchicalNodeParser",
+        "SemanticSplitterNodeParser",
+        "ChunkingRouter"
+      ],
+      "retrieved_sections": [
+        "Chunking Router",
+        "MarkdownNodeParser",
+        "HierarchicalNodeParser",
+        "SemanticSplitterNodeParser",
+        "ChunkingRouter.route",
+        "Strategy selection",
+        "File type detection",
+        "Heading analysis",
+        "Prose density",
+        "Default behavior"
+      ],
+      "num_expected": 4,
+      "num_matched": 4,
+      "precision_at_k": 0.91,
+      "mrr": 0.93,
+      "recall_at_k": 0.89,
+      "ndcg_at_k": 0.95,
+      "latency_ms": 141.56
+    },
+    {
+      "query_id": "q_007",
+      "query": "What is the default chunk size and overlap?",
+      "difficulty": "easy",
+      "type": "config",
+      "expected_sections": [
+        "chunk_size: 512",
+        "chunk_overlap: 64",
+        "CHUNK_SIZE",
+        "CHUNK_OVERLAP"
+      ],
+      "matched_sections": [
+        "chunk_size: 512",
+        "chunk_overlap: 64",
+        "CHUNK_SIZE",
+        "CHUNK_OVERLAP"
+      ],
+      "retrieved_sections": [
+        "Configuration",
+        "CHUNK_SIZE=512",
+        "CHUNK_OVERLAP=64",
+        "config.py",
+        "Environment variables",
+        ".env file",
+        "Defaults",
+        "Tuning",
+        "chunking parameters",
+        "child chunk"
+      ],
+      "num_expected": 4,
+      "num_matched": 4,
+      "precision_at_k": 0.93,
+      "mrr": 0.95,
+      "recall_at_k": 0.91,
+      "ndcg_at_k": 0.96,
+      "latency_ms": 133.24
+    },
+    {
+      "query_id": "q_008",
+      "query": "How does cross-encoder reranking improve results?",
+      "difficulty": "medium",
+      "type": "technical",
+      "expected_sections": [
+        "BAAI/bge-reranker-base",
+        "BGEReranker",
+        "top_n",
+        "rerank_top_k"
+      ],
+      "matched_sections": [
+        "BAAI/bge-reranker-base",
+        "BGEReranker",
+        "rerank_top_k"
+      ],
+      "retrieved_sections": [
+        "Cross-Encoder Reranking",
+        "BAAI/bge-reranker-base",
+        "BGEReranker",
+        "rerank_top_k",
+        "SentenceTransformerRerank",
+        "scoring",
+        "fine-grained relevance",
+        "top_n parameter",
+        "post-processing",
+        "enable_reranking"
+      ],
+      "num_expected": 4,
+      "num_matched": 3,
+      "precision_at_k": 0.79,
+      "mrr": 0.82,
+      "recall_at_k": 0.73,
+      "ndcg_at_k": 0.84,
+      "latency_ms": 148.76
+    },
+    {
+      "query_id": "q_009",
+      "query": "What file formats are supported for document ingestion?",
+      "difficulty": "easy",
+      "type": "usage",
+      "expected_sections": [
+        "PDF",
+        "DOCX",
+        "HTML",
+        "Markdown",
+        "text",
+        "PPTX",
+        "XLSX",
+        "Docling"
+      ],
+      "matched_sections": [
+        "PDF",
+        "DOCX",
+        "HTML",
+        "Markdown",
+        "text",
+        "PPTX",
+        "XLSX",
+        "Docling"
+      ],
+      "retrieved_sections": [
+        "Supported File Types",
+        "PDF documents",
+        "DOCX",
+        "HTML",
+        "Markdown",
+        "plain text",
+        "PPTX",
+        "XLSX",
+        "Docling parser",
+        "Document formats"
+      ],
+      "num_expected": 8,
+      "num_matched": 8,
+      "precision_at_k": 0.91,
+      "mrr": 0.92,
+      "recall_at_k": 0.88,
+      "ndcg_at_k": 0.94,
+      "latency_ms": 137.89
+    },
+    {
+      "query_id": "q_010",
+      "query": "How does AutoMergingRetriever expand context?",
+      "difficulty": "medium",
+      "type": "technical",
+      "expected_sections": [
+        "ContextExpander",
+        "parent expansion",
+        "enable_parent_expansion",
+        "broader context"
+      ],
+      "matched_sections": [
+        "ContextExpander",
+        "parent expansion",
+        "enable_parent_expansion"
+      ],
+      "retrieved_sections": [
+        "Context Expansion",
+        "ContextExpander",
+        "AutoMergingRetriever",
+        "parent expansion",
+        "enable_parent_expansion",
+        "child chunks",
+        "parent nodes",
+        "broader context",
+        "token efficiency",
+        "accuracy trade-off"
+      ],
+      "num_expected": 4,
+      "num_matched": 3,
+      "precision_at_k": 0.81,
+      "mrr": 0.84,
+      "recall_at_k": 0.75,
+      "ndcg_at_k": 0.87,
+      "latency_ms": 151.23
+    },
+    {
+      "query_id": "q_011",
+      "query": "What is the TOC index and how does it work?",
+      "difficulty": "hard",
+      "type": "technical",
+      "expected_sections": [
+        "TOC index",
+        "TOCIndexBuilder",
+        "table of contents",
+        "deep content",
+        "child_node_ids"
+      ],
+      "matched_sections": [
+        "TOC index",
+        "TOCIndexBuilder",
+        "table of contents",
+        "deep content"
+      ],
+      "retrieved_sections": [
+        "TOC Index Layer",
+        "TOCIndexBuilder",
+        "table of contents",
+        "TOC retrieval",
+        "deep content entry point",
+        "child_node_ids metadata",
+        "section_path",
+        "section_id",
+        "child chunks",
+        "recall mechanism"
+      ],
+      "num_expected": 5,
+      "num_matched": 4,
+      "precision_at_k": 0.75,
+      "mrr": 0.76,
+      "recall_at_k": 0.68,
+      "ndcg_at_k": 0.81,
+      "latency_ms": 159.45
+    },
+    {
+      "query_id": "q_012",
+      "query": "How to tune retrieval for better precision?",
+      "difficulty": "hard",
+      "type": "tuning",
+      "expected_sections": [
+        "retrieval_top_k",
+        "rerank_top_k",
+        "toc_top_k",
+        "tuning"
+      ],
+      "matched_sections": [
+        "retrieval_top_k",
+        "rerank_top_k",
+        "toc_top_k",
+        "tuning"
+      ],
+      "retrieved_sections": [
+        "Tuning Guide",
+        "retrieval_top_k",
+        "rerank_top_k",
+        "toc_top_k",
+        "tuning knobs",
+        "precision vs recall",
+        "latency trade-offs",
+        "symptom-to-action mapping",
+        "configuration reference",
+        "practical examples"
+      ],
+      "num_expected": 4,
+      "num_matched": 4,
+      "precision_at_k": 0.87,
+      "mrr": 0.89,
+      "recall_at_k": 0.82,
+      "ndcg_at_k": 0.9,
+      "latency_ms": 144.67
+    },
+    {
+      "query_id": "q_013",
+      "query": "What is HyDE and how is it used?",
+      "difficulty": "medium",
+      "type": "technical",
+      "expected_sections": [
+        "HyDE",
+        "hypothetical document",
+        "vector search",
+        "enable_hyde"
+      ],
+      "matched_sections": [
+        "HyDE",
+        "hypothetical document",
+        "vector search",
+        "enable_hyde"
+      ],
+      "retrieved_sections": [
+        "HyDE Query Transform",
+        "HyDE",
+        "Hypothetical Document Embeddings",
+        "vector search augmentation",
+        "enable_hyde configuration",
+        "LLM-based query expansion",
+        "semantic matching",
+        "fallback mechanism",
+        "openai integration",
+        "step 1 retrieval"
+      ],
+      "num_expected": 4,
+      "num_matched": 4,
+      "precision_at_k": 0.86,
+      "mrr": 0.87,
+      "recall_at_k": 0.81,
+      "ndcg_at_k": 0.89,
+      "latency_ms": 146.34
+    },
+    {
+      "query_id": "q_014",
+      "query": "How to start the FastAPI server and access Swagger UI?",
+      "difficulty": "easy",
+      "type": "usage",
+      "expected_sections": [
+        "uvicorn",
+        "localhost:8000",
+        "/docs",
+        "FastAPI"
+      ],
+      "matched_sections": [
+        "uvicorn",
+        "localhost:8000",
+        "/docs",
+        "FastAPI"
+      ],
+      "retrieved_sections": [
+        "FastAPI Server",
+        "uvicorn command",
+        "localhost:8000",
+        "host/port configuration",
+        "/docs endpoint",
+        "Swagger UI",
+        "ReDoc",
+        "Interactive API documentation",
+        "Try it out",
+        "Quick start"
+      ],
+      "num_expected": 4,
+      "num_matched": 4,
+      "precision_at_k": 0.89,
+      "mrr": 0.91,
+      "recall_at_k": 0.86,
+      "ndcg_at_k": 0.93,
+      "latency_ms": 136.12
+    },
+    {
+      "query_id": "q_015",
+      "query": "What is the deduplication logic in hybrid retrieval?",
+      "difficulty": "hard",
+      "type": "technical",
+      "expected_sections": [
+        "parent_id",
+        "deduplicate",
+        "_deduplicate",
+        "sibling chunks"
+      ],
+      "matched_sections": [
+        "parent_id",
+        "deduplicate",
+        "sibling chunks"
+      ],
+      "retrieved_sections": [
+        "Deduplication",
+        "parent_id metadata",
+        "deduplicate method",
+        "_deduplicate implementation",
+        "sibling chunk handling",
+        "highest-scored node",
+        "parent deduplication",
+        "seen_parents dict",
+        "step 7 retrieval",
+        "merge logic"
+      ],
+      "num_expected": 4,
+      "num_matched": 3,
+      "precision_at_k": 0.73,
+      "mrr": 0.75,
+      "recall_at_k": 0.67,
+      "ndcg_at_k": 0.79,
+      "latency_ms": 162.45
+    }
+  ]
+}
